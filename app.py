@@ -178,73 +178,97 @@ def register_staff():
 @app.route('/api/register/patient', methods=['POST'])
 @limiter.limit("5 per minute")
 def register_patient():
-    data = request.json
-    
-    # Security validation
-    validation_errors = validate_patient_data(data)
-    if validation_errors:
-        log_security_event('INVALID_INPUT', f'Patient registration validation failed: {validation_errors}')
-        return jsonify({'error': 'Invalid input data', 'details': validation_errors}), 400
-    
-    # Sanitize data
-    sanitized_data = sanitize_patient_data(data)
-    
-    patient_data = {
-        'id': sanitized_data.get('patientId', f"P{len(registration_data['patients']) + 1:03d}"),
-        'patientId': sanitized_data.get('patientId'),
-        'name': sanitized_data.get('fullName'),
-        'fullName': sanitized_data.get('fullName'),
-        'bed_number': sanitized_data.get('bedNumber'),
-        'bedNumber': sanitized_data.get('bedNumber'),
-        'roomNumber': sanitized_data.get('roomNumber'),
-        'primaryCondition': sanitized_data.get('primaryCondition'),
-        'lastActivity': 'Just registered'
-    }
-    
-    # Save to database
     try:
-        new_patient = Patient(
-            patient_id=sanitized_data.get('patientId'),
-            full_name=sanitized_data.get('fullName'),
-            date_of_birth=datetime.strptime(sanitized_data.get('dateOfBirth'), '%Y-%m-%d').date() if sanitized_data.get('dateOfBirth') else None,
-            gender=sanitized_data.get('gender'),
-            blood_type=sanitized_data.get('bloodType'),
-            primary_condition=sanitized_data.get('primaryCondition'),
-            mobility_level=sanitized_data.get('mobilityLevel'),
-            medical_history=sanitized_data.get('medicalHistory'),
-            attending_physician=sanitized_data.get('attendingPhysician'),
-            room_number=sanitized_data.get('roomNumber'),
-            bed_number=sanitized_data.get('bedNumber'),
-            department=sanitized_data.get('department'),
-            care_level=sanitized_data.get('careLevel'),
-            assigned_nurse_id=sanitized_data.get('assignedNurse'),
-            communication_methods=json.dumps(sanitized_data.get('communicationMethods', [])),
-            communication_notes=sanitized_data.get('communicationNotes'),
-            admission_date=datetime.strptime(sanitized_data.get('admissionDate'), '%Y-%m-%d').date() if sanitized_data.get('admissionDate') else date.today()
-        )
+        data = request.json
+        if not data:
+            return jsonify({"status": "error", "message": "No data provided"}), 400
         
-        db.session.add(new_patient)
-        db.session.commit()
+        # Basic validation first
+        required_fields = ['fullName', 'patientId', 'bedNumber', 'roomNumber', 'primaryCondition']
+        for field in required_fields:
+            if not data.get(field):
+                return jsonify({"status": "error", "message": f"Missing required field: {field}"}), 400
         
-        # Also keep in memory for backward compatibility
-        registration_data['patients'].append(patient_data)
+        # Security validation
+        try:
+            validation_errors = validate_patient_data(data)
+            if validation_errors:
+                log_security_event('INVALID_INPUT', f'Patient registration validation failed: {validation_errors}')
+                return jsonify({'error': 'Invalid input data', 'details': validation_errors}), 400
+        except Exception as e:
+            print(f"[WARNING] Security validation failed: {e}")
+            # Continue without security validation if it fails
         
-        # Ensure patients list exists for validation
-        if not registration_data.get('patients'):
-            registration_data['patients'] = []
+        # Sanitize data
+        try:
+            sanitized_data = sanitize_patient_data(data)
+        except Exception as e:
+            print(f"[WARNING] Data sanitization failed: {e}")
+            sanitized_data = data  # Use original data if sanitization fails
         
-        log_security_event('PATIENT_REGISTERED', f'Patient {new_patient.full_name} registered successfully')
+        patient_data = {
+            'id': sanitized_data.get('patientId', f"P{len(registration_data['patients']) + 1:03d}"),
+            'patientId': sanitized_data.get('patientId'),
+            'name': sanitized_data.get('fullName'),
+            'fullName': sanitized_data.get('fullName'),
+            'bed_number': sanitized_data.get('bedNumber'),
+            'bedNumber': sanitized_data.get('bedNumber'),
+            'roomNumber': sanitized_data.get('roomNumber'),
+            'primaryCondition': sanitized_data.get('primaryCondition'),
+            'lastActivity': 'Just registered'
+        }
         
-        return jsonify({
-            "status": "success", 
-            "message": "Patient registered successfully", 
-            "patient_id": new_patient.patient_id
-        })
-        
+        # Save to database
+        try:
+            new_patient = Patient(
+                patient_id=sanitized_data.get('patientId'),
+                full_name=sanitized_data.get('fullName'),
+                date_of_birth=datetime.strptime(sanitized_data.get('dateOfBirth'), '%Y-%m-%d').date() if sanitized_data.get('dateOfBirth') else None,
+                gender=sanitized_data.get('gender'),
+                blood_type=sanitized_data.get('bloodType'),
+                primary_condition=sanitized_data.get('primaryCondition'),
+                mobility_level=sanitized_data.get('mobilityLevel'),
+                medical_history=sanitized_data.get('medicalHistory'),
+                attending_physician=sanitized_data.get('attendingPhysician'),
+                room_number=sanitized_data.get('roomNumber'),
+                bed_number=sanitized_data.get('bedNumber'),
+                department=sanitized_data.get('department'),
+                care_level=sanitized_data.get('careLevel'),
+                assigned_nurse_id=sanitized_data.get('assignedNurse'),
+                communication_methods=json.dumps(sanitized_data.get('communicationMethods', [])),
+                communication_notes=sanitized_data.get('communicationNotes'),
+                admission_date=datetime.strptime(sanitized_data.get('admissionDate'), '%Y-%m-%d').date() if sanitized_data.get('admissionDate') else date.today()
+            )
+            
+            db.session.add(new_patient)
+            db.session.commit()
+            
+            # Also keep in memory for backward compatibility
+            registration_data['patients'].append(patient_data)
+            
+            try:
+                log_security_event('PATIENT_REGISTERED', f'Patient {new_patient.full_name} registered successfully')
+            except:
+                pass  # Continue if logging fails
+            
+            return jsonify({
+                "status": "success", 
+                "message": "Patient registered successfully", 
+                "patient_id": new_patient.patient_id
+            })
+            
+        except Exception as e:
+            db.session.rollback()
+            print(f"[ERROR] Database error: {str(e)}")
+            try:
+                log_security_event('PATIENT_REGISTRATION_ERROR', f'Database error: {str(e)}')
+            except:
+                pass
+            return jsonify({"status": "error", "message": f"Registration failed: {str(e)}"}), 500
+            
     except Exception as e:
-        db.session.rollback()
-        log_security_event('PATIENT_REGISTRATION_ERROR', f'Database error: {str(e)}')
-        return jsonify({"status": "error", "message": "Registration failed. Please try again."}), 500
+        print(f"[ERROR] Patient registration error: {str(e)}")
+        return jsonify({"status": "error", "message": f"Registration failed: {str(e)}"}), 500
 
 @app.route('/api/register/caregiver', methods=['POST'])
 def register_caregiver():

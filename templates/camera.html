@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>BedsideBot Camera Interface</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            text-align: center; 
+            padding: 20px; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            color: white; 
+            margin: 0;
+        }
+        .container { max-width: 900px; margin: 0 auto; }
+        video { 
+            width: 100%; 
+            max-width: 640px; 
+            border: 3px solid white; 
+            border-radius: 15px; 
+            margin: 20px 0; 
+            background: #000;
+        }
+        .controls { margin: 20px 0; }
+        .btn { 
+            padding: 12px 24px; 
+            margin: 8px; 
+            background: rgba(255,255,255,0.2); 
+            color: white; 
+            border: 2px solid white; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 16px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn:hover { background: rgba(255,255,255,0.3); }
+        .gesture-info { 
+            background: rgba(0,0,0,0.3); 
+            padding: 25px; 
+            border-radius: 15px; 
+            margin: 20px 0; 
+        }
+        .status { 
+            background: rgba(0,255,0,0.2); 
+            padding: 15px; 
+            border-radius: 10px; 
+            margin: 15px 0; 
+            border: 2px solid rgba(0,255,0,0.5);
+        }
+        .error { 
+            background: rgba(255,0,0,0.2); 
+            padding: 15px; 
+            border-radius: 10px; 
+            margin: 15px 0; 
+            border: 2px solid rgba(255,0,0,0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎥 BedsideBot Live Camera</h1>
+        <p>Real-time patient monitoring with gesture recognition</p>
+        
+        <div id="status" class="status">
+            📹 Click "Start Camera" to begin monitoring
+        </div>
+        
+        <video id="video" autoplay playsinline muted></video>
+        
+        <div class="controls">
+            <button class="btn" onclick="startCamera()">📹 Start Camera</button>
+            <button class="btn" onclick="stopCamera()">⏹️ Stop Camera</button>
+            <a href="/interface" class="btn">🏥 Patient Interface</a>
+            <a href="/" class="btn">🏠 Home</a>
+        </div>
+        
+        <div class="gesture-info">
+            <h3>✋ Hand Gesture Commands</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; text-align: left;">
+                <div>👩‍⚕️ <strong>1 Finger</strong> = Call Nurse</div>
+                <div>💧 <strong>2 Fingers</strong> = Need Water</div>
+                <div>🍽️ <strong>3 Fingers</strong> = Need Food</div>
+                <div>🚿 <strong>4 Fingers</strong> = Bathroom Help</div>
+                <div>🚨 <strong>5 Fingers</strong> = Emergency!</div>
+            </div>
+        </div>
+        
+        <div class="gesture-info">
+            <h3>🎤 Voice Commands</h3>
+            <p>Say: "water", "food", "help", "bathroom", "emergency"</p>
+        </div>
+    </div>
+    
+    <script>
+        let stream = null;
+        const video = document.getElementById('video');
+        const status = document.getElementById('status');
+        
+        async function startCamera() {
+            try {
+                status.textContent = '📡 Requesting camera access...';
+                status.className = 'status';
+                
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        width: { ideal: 640 }, 
+                        height: { ideal: 480 },
+                        facingMode: 'user'
+                    },
+                    audio: false
+                });
+                
+                video.srcObject = stream;
+                status.textContent = '✅ Camera active - Show hand gestures to communicate';
+                status.className = 'status';
+                
+                console.log('Camera started successfully');
+                
+            } catch (err) {
+                status.textContent = '❌ Camera access denied. Please allow camera access in your browser settings.';
+                status.className = 'error';
+                console.error('Camera error:', err);
+            }
+        }
+        
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                video.srcObject = null;
+                stream = null;
+                status.textContent = '⏹️ Camera stopped';
+                status.className = 'status';
+            }
+        }
+        
+        // Auto-start camera when page loads
+        window.addEventListener('load', () => {
+            setTimeout(startCamera, 1000);
+        });
+        
+        // Handle page visibility changes
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                // Page is hidden, optionally pause
+            } else {
+                // Page is visible, ensure camera is running
+                if (!stream) {
+                    startCamera();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

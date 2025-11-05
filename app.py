@@ -82,23 +82,20 @@ def static_files(filename):
 def health_check():
     return "OK", 200
 
-# Video feed endpoint (placeholder for cloud)
+# Browser camera access page
+@app.route('/camera')
+def camera_access():
+    return render_template('camera.html')
+
+# Video feed endpoint (browser camera access)
 @app.route('/video_feed')
 def video_feed():
-    def generate():
-        # Create a simple placeholder image response
-        import io
-        import base64
-        
-        # Simple 1x1 pixel image data
-        pixel_data = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\tpHYs\x00\x00\x0b\x13\x00\x00\x0b\x13\x01\x00\x9a\x9c\x18\x00\x00\x00\x0cIDATx\x9cc```\x00\x00\x00\x04\x00\x01\xdd\x8d\xb4\x1c\x00\x00\x00\x00IEND\xaeB`\x82'
-        
-        while True:
-            yield (b'--frame\r\n'
-                   b'Content-Type: image/png\r\n\r\n' + pixel_data + b'\r\n')
-            time.sleep(0.1)
-    
-    return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
+    return '''
+    <html><body style="text-align: center; padding: 50px; font-family: Arial;">
+    <h2>🎥 Camera Access Required</h2>
+    <p>Please use the <a href="/camera">Camera Interface</a> for live video.</p>
+    </body></html>
+    '''
 
 # API Routes for registration
 @app.route('/api/register/hospital', methods=['POST'])

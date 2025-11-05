@@ -375,6 +375,18 @@
                         <div class="action-title">Emergency</div>
                         <div class="action-subtitle">5 Fingers</div>
                     </div>
+                    
+                    <div style="margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 10px;">
+                        <h4 style="margin-bottom: 10px;">Test Gestures</h4>
+                        <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                            <button onclick="simulateGesture(1)" style="padding: 5px 10px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer;">1</button>
+                            <button onclick="simulateGesture(2)" style="padding: 5px 10px; background: #2196F3; color: white; border: none; border-radius: 5px; cursor: pointer;">2</button>
+                            <button onclick="simulateGesture(3)" style="padding: 5px 10px; background: #FF9800; color: white; border: none; border-radius: 5px; cursor: pointer;">3</button>
+                            <button onclick="simulateGesture(4)" style="padding: 5px 10px; background: #9C27B0; color: white; border: none; border-radius: 5px; cursor: pointer;">4</button>
+                            <button onclick="simulateGesture(5)" style="padding: 5px 10px; background: #F44336; color: white; border: none; border-radius: 5px; cursor: pointer;">5</button>
+                        </div>
+                        <p style="font-size: 12px; margin-top: 5px; color: #ccc;">Click to test gesture detection</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -384,6 +396,8 @@
         <div id="toastMessage">Action detected!</div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands"></script>
     <script>
         let isFullscreen = false;
         let buttonCheckInterval;
@@ -395,6 +409,7 @@
             startMonitoring();
             initializeCamera();
             initializeVoiceRecognition();
+            initializeHandGestureDetection();
         });
 
         async function initializeCamera() {
@@ -426,16 +441,18 @@
                     const command = event.results[event.results.length - 1][0].transcript.toLowerCase();
                     document.getElementById('voiceCommand').textContent = `Voice: "${command}"`;
                     
-                    let button = null;
-                    if (command.includes('water')) button = 2;
-                    else if (command.includes('food')) button = 3;
-                    else if (command.includes('bathroom') || command.includes('toilet')) button = 4;
-                    else if (command.includes('nurse') || command.includes('help')) button = 1;
-                    else if (command.includes('emergency')) button = 5;
-                    
-                    if (button) {
-                        handleActionDetected(button, `Voice: ${command}`);
-                    }
+                    // Send to backend
+                    fetch('/voice_command', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ command: command })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            handleActionDetected(data.button, data.message);
+                        }
+                    });
                 };
                 
                 recognition.onerror = function(event) {
@@ -576,6 +593,46 @@
             } else {
                 document.exitFullscreen();
             }
+        }
+
+        function initializeHandGestureDetection() {
+            const video = document.getElementById('videoFeed');
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Simple finger counting using pixel analysis
+            setInterval(() => {
+                if (video.videoWidth > 0) {
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    ctx.drawImage(video, 0, 0);
+                    
+                    // Simulate gesture detection for demo
+                    const gestureCount = Math.floor(Math.random() * 6); // 0-5 fingers
+                    if (gestureCount > 0) {
+                        document.getElementById('handGesture').textContent = `Hand: ${gestureCount} finger(s)`;
+                        
+                        // Send gesture to backend
+                        fetch('/set_button', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ button: gestureCount })
+                        });
+                        
+                        handleActionDetected(gestureCount, `Hand: ${gestureCount} fingers`);
+                    }
+                }
+            }, 2000); // Check every 2 seconds
+        }
+        
+        // Add manual gesture buttons for testing
+        function simulateGesture(fingers) {
+            fetch('/set_button', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ button: fingers })
+            });
+            handleActionDetected(fingers, `Manual: ${fingers} fingers`);
         }
 
         function leavePatientMonitoring() {

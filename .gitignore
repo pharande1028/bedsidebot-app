@@ -36,8 +36,8 @@ Thumbs.db
 # Logs
 *.log
 
-# Batch files
-*.bat
+# Batch files (keep deployment scripts)
+# *.bat
 
 # Temporary files
 *.tmp

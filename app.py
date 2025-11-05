@@ -171,10 +171,27 @@ def get_selected_button():
 
 @app.route('/set_button', methods=['POST'])
 def set_button():
-    global selected_button
+    global selected_button, latest_request
     data = request.get_json()
-    selected_button = data.get("button")
-    return jsonify({"status": "success"})
+    button = data.get("button")
+    
+    if button and 1 <= button <= 5:
+        selected_button = button
+        button_names = ["Call Nurse", "Water", "Food", "Bathroom", "Emergency"]
+        action_name = button_names[button - 1]
+        
+        latest_request = {
+            "patientName": patient_info.get("name", "Unknown Patient"),
+            "bedNumber": patient_info.get("bed_number", "N/A"),
+            "requestType": button,
+            "timestamp": time.time(),
+            "message": f"Hand Gesture: {action_name}"
+        }
+        
+        print(f"[NOTIFICATION] {patient_info.get('name', 'Patient')} - {action_name} (Gesture)")
+        return jsonify({"status": "success", "message": action_name})
+    
+    return jsonify({"status": "error", "message": "Invalid gesture"})
 
 @app.route('/listen_voice', methods=['POST'])
 def listen_voice():

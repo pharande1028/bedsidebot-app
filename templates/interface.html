@@ -396,8 +396,9 @@
         <div id="toastMessage">Action detected!</div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
     <script>
         let isFullscreen = false;
         let buttonCheckInterval;
@@ -595,34 +596,98 @@
             }
         }
 
+        let hands, camera;
+        let lastGestureTime = 0;
+        let lastDetectedFingers = 0;
+        
         function initializeHandGestureDetection() {
             const video = document.getElementById('videoFeed');
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
             
-            // Simple finger counting using pixel analysis
-            setInterval(() => {
-                if (video.videoWidth > 0) {
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
-                    ctx.drawImage(video, 0, 0);
+            // Initialize MediaPipe Hands
+            hands = new Hands({
+                locateFile: (file) => {
+                    return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+                }
+            });
+            
+            hands.setOptions({
+                maxNumHands: 1,
+                modelComplexity: 1,
+                minDetectionConfidence: 0.5,
+                minTrackingConfidence: 0.5
+            });
+            
+            hands.onResults(onHandResults);
+            
+            // Initialize camera
+            camera = new Camera(video, {
+                onFrame: async () => {
+                    await hands.send({image: video});
+                },
+                width: 640,
+                height: 480
+            });
+            
+            camera.start();
+        }
+        
+        function onHandResults(results) {
+            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                const landmarks = results.multiHandLandmarks[0];
+                const fingerCount = countFingers(landmarks);
+                
+                // Only process if different from last detection and enough time passed
+                const now = Date.now();
+                if (fingerCount !== lastDetectedFingers && (now - lastGestureTime) > 2000) {
+                    lastDetectedFingers = fingerCount;
+                    lastGestureTime = now;
                     
-                    // Simulate gesture detection for demo
-                    const gestureCount = Math.floor(Math.random() * 6); // 0-5 fingers
-                    if (gestureCount > 0) {
-                        document.getElementById('handGesture').textContent = `Hand: ${gestureCount} finger(s)`;
+                    if (fingerCount >= 1 && fingerCount <= 5) {
+                        document.getElementById('handGesture').textContent = `Hand: ${fingerCount} finger(s)`;
                         
-                        // Send gesture to backend
+                        // Send to backend
                         fetch('/set_button', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ button: gestureCount })
+                            body: JSON.stringify({ button: fingerCount })
                         });
                         
-                        handleActionDetected(gestureCount, `Hand: ${gestureCount} fingers`);
+                        handleActionDetected(fingerCount, getActionName(fingerCount));
                     }
                 }
-            }, 2000); // Check every 2 seconds
+            }
+        }
+        
+        function countFingers(landmarks) {
+            const tipIds = [4, 8, 12, 16, 20]; // Thumb, Index, Middle, Ring, Pinky tips
+            const pipIds = [3, 6, 10, 14, 18]; // PIP joints for comparison
+            
+            let fingers = 0;
+            
+            // Thumb (different logic - compare x coordinates)
+            if (landmarks[tipIds[0]].x > landmarks[pipIds[0]].x) {
+                fingers++;
+            }
+            
+            // Other fingers (compare y coordinates - tip should be above PIP)
+            for (let i = 1; i < 5; i++) {
+                if (landmarks[tipIds[i]].y < landmarks[pipIds[i]].y) {
+                    fingers++;
+                }
+            }
+            
+            return fingers;
+        }
+        
+        function getActionName(fingerCount) {
+            const actions = {
+                1: "Call Nurse",
+                2: "Water", 
+                3: "Food",
+                4: "Bathroom",
+                5: "Emergency"
+            };
+            return actions[fingerCount] || "Unknown";
         }
         
         // Add manual gesture buttons for testing

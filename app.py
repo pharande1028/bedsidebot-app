@@ -23,8 +23,8 @@ CORS(app, origins=['https://*.railway.app', 'https://localhost:*'])
 
 # Initialize rate limiter
 limiter = Limiter(
-    app,
     key_func=get_remote_address,
+    app=app,
     default_limits=["100 per hour"]
 )
 
@@ -442,6 +442,9 @@ def print_patient_report_direct(patient_id):
         
         # Generate and return HTML report directly
         return generate_report_html(patient, requests, patterns)
+        
+    except Exception as e:
+        return f'<h1>Error generating report: {str(e)}</h1>'
 
 # Add a simple test report route
 @app.route('/test/report')
@@ -465,9 +468,6 @@ def test_report():
     </body>
     </html>
     '''
-        
-    except Exception as e:
-        return f'<h1>Error generating report: {str(e)}</h1>'
 
 @app.route('/api/patient/report/<patient_id>', methods=['GET'])
 def generate_patient_report(patient_id):

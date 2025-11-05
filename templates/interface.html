@@ -240,98 +240,6 @@
             font-size: 12px;
             color: #b0b0b0;
         }
-        
-        .trigger-info {
-            position: absolute;
-            bottom: 100px;
-            left: 20px;
-            background: rgba(33, 150, 243, 0.9);
-            padding: 10px 15px;
-            border-radius: 8px;
-            font-size: 12px;
-            color: white;
-            animation: fadeInOut 3s infinite;
-        }
-        
-        @keyframes fadeInOut {
-            0%, 100% { opacity: 0.7; }
-            50% { opacity: 1; }
-        }
-
-        .voice-indicator {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            width: 60px;
-            height: 60px;
-            background: rgba(33, 150, 243, 0.9);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            animation: voicePulse 1.5s infinite;
-        }
-
-        @keyframes voicePulse {
-            0%, 100% { transform: scale(1); opacity: 0.8; }
-            50% { transform: scale(1.1); opacity: 1; }
-        }
-
-        .emergency-alert {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(244, 67, 54, 0.95);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            animation: emergencyFlash 1s infinite;
-        }
-
-        @keyframes emergencyFlash {
-            0%, 100% { opacity: 0.95; }
-            50% { opacity: 0.8; }
-        }
-
-        .emergency-content {
-            text-align: center;
-            font-size: 48px;
-            font-weight: bold;
-        }
-
-        .notification-toast {
-            position: fixed;
-            top: 100px;
-            right: 30px;
-            background: rgba(0, 0, 0, 0.9);
-            padding: 15px 20px;
-            border-radius: 10px;
-            border-left: 4px solid #4CAF50;
-            transform: translateX(400px);
-            transition: transform 0.3s ease;
-            z-index: 1000;
-        }
-
-        .notification-toast.show {
-            transform: translateX(0);
-        }
-
-        .gesture-display {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.8);
-            padding: 20px;
-            border-radius: 15px;
-            text-align: center;
-            font-size: 24px;
-            display: none;
-        }
 
         .exit-button {
             position: fixed;
@@ -350,49 +258,27 @@
         .exit-button:hover {
             background: rgba(244, 67, 54, 1);
         }
-        
-        .exit-button:nth-child(2):hover {
-            background: rgba(52, 152, 219, 1);
+
+        .notification-toast {
+            position: fixed;
+            top: 100px;
+            right: 30px;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 15px 20px;
+            border-radius: 10px;
+            border-left: 4px solid #4CAF50;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 1000;
         }
 
-        @media (max-width: 768px) {
-            .control-panel {
-                width: 100%;
-                height: 200px;
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                right: 0;
-            }
-
-            .action-grid {
-                grid-template-columns: repeat(5, 1fr);
-                gap: 10px;
-                padding: 15px;
-            }
-
-            .action-button {
-                padding: 15px 10px;
-            }
-
-            .action-icon {
-                font-size: 24px;
-                margin-bottom: 5px;
-            }
-
-            .action-title {
-                font-size: 12px;
-            }
-
-            .action-subtitle {
-                display: none;
-            }
+        .notification-toast.show {
+            transform: translateX(0);
         }
     </style>
 </head>
 <body>
     <div class="fullscreen-container">
-        <!-- Top Bar -->
         <div class="top-bar">
             <div class="patient-info">
                 <div class="patient-avatar">👤</div>
@@ -423,13 +309,10 @@
             </div>
         </div>
 
-        <!-- Main Content -->
         <div class="main-content">
-            <!-- Video Section -->
             <div class="video-section">
-                <iframe src="/camera" class="video-feed" id="videoFeed" style="border: none; border-radius: 10px;"></iframe>
+                <video class="video-feed" id="videoFeed" autoplay playsinline muted style="background: #000; border-radius: 10px;"></video>
                 
-                <!-- Video Overlay -->
                 <div class="video-overlay">
                     <div class="detection-info">
                         <div class="detection-item">
@@ -452,26 +335,10 @@
                             <div class="detection-icon" style="background: #FF5722;"></div>
                             <span id="lastAction">Last: None</span>
                         </div>
-                        <div class="detection-item" id="bufferTimer" style="display: none;">
-                            <div class="detection-icon" style="background: #FFC107;"></div>
-                            <span id="bufferText">Next in: 0.0s</span>
-                        </div>
                     </div>
-
-                    <div class="gesture-display" id="gestureDisplay">
-                        <div id="gestureText">✋ 5 Fingers Detected</div>
-                    </div>
-                </div>
-
-                <!-- Voice Indicator -->
-                <div class="voice-indicator" id="voiceIndicator">🎤</div>
-                
-                <div class="trigger-info" id="triggerInfo">
-                    💬 Say: "water", "food", "help", "bathroom", "emergency"
                 </div>
             </div>
 
-            <!-- Control Panel -->
             <div class="control-panel">
                 <div class="panel-header">
                     <h3>Patient Actions</h3>
@@ -480,7 +347,7 @@
                 
                 <div class="action-grid">
                     <div class="action-button" data-action="1">
-                        <span class="action-icon">👩‍⚕️</span>
+                        <span class="action-icon">👩⚕️</span>
                         <div class="action-title">Call Nurse</div>
                         <div class="action-subtitle">1 Finger</div>
                     </div>
@@ -513,96 +380,88 @@
         </div>
     </div>
 
-    <!-- Emergency Alert -->
-    <div class="emergency-alert" id="emergencyAlert">
-        <div class="emergency-content">
-            🚨 EMERGENCY ALERT 🚨<br>
-            <div style="font-size: 24px; margin-top: 20px;">Patient needs immediate assistance!</div>
-        </div>
-    </div>
-
-    <!-- Notification Toast -->
     <div class="notification-toast" id="notificationToast">
         <div id="toastMessage">Action detected!</div>
     </div>
 
-
-
     <script>
         let isFullscreen = false;
         let buttonCheckInterval;
-        let voiceListeningInterval;
         let currentAction = null;
+        let recognition = null;
 
-        // Load on DOM ready (no auto-fullscreen)
         document.addEventListener('DOMContentLoaded', function() {
             loadPatientInfo();
             startMonitoring();
+            initializeCamera();
+            initializeVoiceRecognition();
         });
 
-        function enterFullscreen() {
-            const elem = document.documentElement;
-            if (elem.requestFullscreen) {
-                elem.requestFullscreen().catch(err => console.log('Fullscreen request failed:', err));
-            } else if (elem.webkitRequestFullscreen) {
-                elem.webkitRequestFullscreen();
-            } else if (elem.msRequestFullscreen) {
-                elem.msRequestFullscreen();
+        async function initializeCamera() {
+            const video = document.getElementById('videoFeed');
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { width: 640, height: 480 }, 
+                    audio: false 
+                });
+                video.srcObject = stream;
+                showNotification('Camera initialized successfully');
+            } catch (err) {
+                console.error('Camera error:', err);
+                video.style.background = '#333';
+                video.innerHTML = '<div style="color: white; text-align: center; padding: 50px; font-size: 18px;">📹 Camera access required<br><br>Please allow camera access and refresh the page</div>';
             }
-            isFullscreen = true;
         }
-
-        function leavePatientMonitoring() {
-            const patientName = document.getElementById('patientName').textContent;
-            if (confirm(`Are you sure you want to stop monitoring and remove ${patientName} from the system?`)) {
-                // Stop monitoring first
-                stopMonitoring();
+        
+        function initializeVoiceRecognition() {
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
                 
-                // Exit fullscreen if active
-                if (document.fullscreenElement) {
-                    if (document.exitFullscreen) {
-                        document.exitFullscreen().catch(err => console.log('Exit fullscreen failed:', err));
-                    } else if (document.webkitExitFullscreen) {
-                        document.webkitExitFullscreen();
-                    } else if (document.msExitFullscreen) {
-                        document.msExitFullscreen();
+                recognition.continuous = true;
+                recognition.interimResults = false;
+                recognition.lang = 'en-US';
+                
+                recognition.onresult = function(event) {
+                    const command = event.results[event.results.length - 1][0].transcript.toLowerCase();
+                    document.getElementById('voiceCommand').textContent = `Voice: "${command}"`;
+                    
+                    let button = null;
+                    if (command.includes('water')) button = 2;
+                    else if (command.includes('food')) button = 3;
+                    else if (command.includes('bathroom') || command.includes('toilet')) button = 4;
+                    else if (command.includes('nurse') || command.includes('help')) button = 1;
+                    else if (command.includes('emergency')) button = 5;
+                    
+                    if (button) {
+                        handleActionDetected(button, `Voice: ${command}`);
                     }
-                }
+                };
                 
-                // Remove patient from system
-                fetch('/api/get_patients')
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.patients && data.patients.length > 0) {
-                            const patient = data.patients[0];
-                            return fetch('/api/remove_patient', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json'
-                                },
-                                body: JSON.stringify({ patient_id: patient.id })
-                            });
-                        }
-                    })
-                    .finally(() => {
-                        // Always redirect regardless of success/failure
-                        window.location.href = '/modules';
-                    });
+                recognition.onerror = function(event) {
+                    console.log('Speech recognition error:', event.error);
+                };
+                
+                recognition.start();
+                
+                recognition.onend = function() {
+                    setTimeout(() => recognition.start(), 1000);
+                };
+                
+                showNotification('Voice recognition initialized');
+            } else {
+                document.getElementById('voiceCommand').textContent = 'Voice: Not supported in this browser';
             }
         }
 
         function loadPatientInfo() {
-            // Load registered patients and show selection
             fetch('/api/get_patients')
                 .then(response => response.json())
                 .then(data => {
                     if (data.patients && data.patients.length > 0) {
-                        // Use first patient or show selection dialog
                         const patient = data.patients[0];
                         document.getElementById('patientName').textContent = patient.name;
                         document.getElementById('bedNumber').textContent = `Bed: ${patient.bed_number}`;
-                        
-                        // Start monitoring for this patient
                         startPatientMonitoring(patient.name, patient.bed_number);
                     } else {
                         document.getElementById('patientName').textContent = 'No Patient Registered';
@@ -616,7 +475,6 @@
         }
         
         function startPatientMonitoring(patientName, bedNumber) {
-            // Start monitoring with patient data
             fetch('/start_monitoring', {
                 method: 'POST',
                 headers: {
@@ -638,35 +496,8 @@
         }
 
         function startMonitoring() {
-            // Start continuous button polling
             startButtonPolling();
-            
-            // Start continuous voice listening
-            startContinuousVoiceListening();
-            
-            // Start video feed refresh
-            startVideoRefresh();
-            
             showNotification('Monitoring started - System is now active');
-        }
-        
-        function startVideoRefresh() {
-            const videoFeed = document.getElementById('videoFeed');
-            
-            function refreshVideo() {
-                // Add timestamp to prevent caching
-                const timestamp = new Date().getTime();
-                videoFeed.src = `/video_feed?t=${timestamp}`;
-            }
-            
-            // Refresh video every 200ms for smooth experience
-            setInterval(refreshVideo, 200);
-            
-            // Handle image load errors
-            videoFeed.onerror = function() {
-                console.log('Video feed error, retrying...');
-                setTimeout(refreshVideo, 1000);
-            };
         }
 
         function startButtonPolling() {
@@ -680,11 +511,8 @@
                     .then(data => {
                         updateActionButtons(data.button);
                         updateDetectionInfo(data);
-                        updateSystemStats();
-                        updateBufferTimer(data.time_remaining);
                         
                         if (data.button) {
-                            // Always process new inputs, don't block on currentAction
                             if (data.button !== currentAction || !currentAction) {
                                 currentAction = data.button;
                                 handleActionDetected(data.button, data.text);
@@ -694,42 +522,14 @@
                     .catch(error => {
                         console.error('Error polling for button:', error);
                     });
-            }, 100); // Poll every 100ms for faster response
-        }
-
-        function startContinuousVoiceListening() {
-            // Continuous voice listening without user interaction
-            function listenForVoice() {
-                fetch('/listen_voice', { method: 'POST' })
-                    .then(response => response.json())
-                    .then(data => {
-                        updateVoiceStatus(data);
-                        
-                        if (data.status === 'success' && data.button) {
-                            // Always process voice commands immediately
-                            handleActionDetected(data.button, data.command);
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Voice listening error:', error);
-                    })
-                    .finally(() => {
-                        // Restart voice listening immediately
-                        setTimeout(listenForVoice, 100);
-                    });
-            }
-            
-            // Start the continuous listening loop
-            listenForVoice();
+            }, 100);
         }
 
         function updateActionButtons(activeButton) {
-            // Don't clear previous selections - allow multiple active buttons
             if (activeButton) {
                 const activeBtn = document.querySelector(`.action-button[data-action="${activeButton}"]`);
                 if (activeBtn && !activeBtn.classList.contains('active')) {
                     activeBtn.classList.add('active');
-                    // Keep active for 3 seconds to show buffer period
                     setTimeout(() => {
                         activeBtn.classList.remove('active');
                     }, 3000);
@@ -738,81 +538,24 @@
         }
 
         function updateDetectionInfo(data) {
-            // Update hand gesture display
             if (data.button) {
                 document.getElementById('handGesture').textContent = `Hand: ${data.button} finger(s)`;
                 document.getElementById('lastAction').textContent = `Last: ${data.text}`;
-                showGestureDisplay(`✋ ${data.button} Finger(s) Detected`);
             } else {
                 document.getElementById('handGesture').textContent = 'Hand: None';
             }
         }
-        
-        function updateSystemStats() {
-            const now = Date.now();
-            if (!window.lastStatsUpdate || now - window.lastStatsUpdate > 1000) {
-                window.lastStatsUpdate = now;
-                document.getElementById('systemFPS').textContent = 'FPS: 30+';
-            }
-        }
-
-        function updateVoiceStatus(data) {
-            const voiceCommand = document.getElementById('voiceCommand');
-            const voiceIndicator = document.getElementById('voiceIndicator');
-            const triggerInfo = document.getElementById('triggerInfo');
-            
-            if (data.status === 'success') {
-                voiceCommand.textContent = `Voice: "${data.command}"`;
-                voiceIndicator.style.background = 'rgba(76, 175, 80, 0.9)';
-                triggerInfo.style.display = 'none';
-            } else if (data.status === 'trigger_only') {
-                voiceCommand.textContent = 'Voice: Trigger detected, say command';
-                voiceIndicator.style.background = 'rgba(255, 193, 7, 0.9)';
-                triggerInfo.style.display = 'block';
-            } else if (data.status === 'no_trigger') {
-                voiceCommand.textContent = 'Voice: Say "Bot I need..."';
-                voiceIndicator.style.background = 'rgba(33, 150, 243, 0.9)';
-                triggerInfo.style.display = 'block';
-            } else if (data.status === 'timeout') {
-                voiceCommand.textContent = 'Voice: Listening...';
-                voiceIndicator.style.background = 'rgba(33, 150, 243, 0.9)';
-                triggerInfo.style.display = 'block';
-            } else {
-                voiceCommand.textContent = 'Voice: Ready';
-                voiceIndicator.style.background = 'rgba(33, 150, 243, 0.9)';
-                triggerInfo.style.display = 'block';
-            }
-        }
 
         function handleActionDetected(action, text) {
-            // Show notification with buffer info
-            showNotification(`Patient Request: ${text} - Next selection in 3 seconds`);
+            showNotification(`Patient Request: ${text}`);
             
-            // Handle emergency
             if (action == 5) {
-                showEmergencyAlert();
+                showNotification('🚨 EMERGENCY ALERT - Immediate assistance required!');
             }
             
-            // Reset currentAction after 3 seconds to match buffer
             setTimeout(() => {
                 currentAction = null;
             }, 3000);
-        }
-
-        function showGestureDisplay(text) {
-            const gestureDisplay = document.getElementById('gestureDisplay');
-            const gestureText = document.getElementById('gestureText');
-            
-            gestureText.textContent = text;
-            gestureDisplay.style.display = 'block';
-            
-            setTimeout(() => {
-                gestureDisplay.style.display = 'none';
-            }, 1500);
-        }
-
-        function hideGestureDisplay() {
-            document.getElementById('gestureDisplay').style.display = 'none';
         }
 
         function showNotification(message) {
@@ -827,81 +570,23 @@
             }, 3000);
         }
 
-        function showEmergencyAlert() {
-            const alert = document.getElementById('emergencyAlert');
-            alert.style.display = 'flex';
-            
-            // Auto-hide after 5 seconds
-            setTimeout(() => {
-                alert.style.display = 'none';
-            }, 5000);
-        }
-
-        function stopMonitoring() {
-            if (buttonCheckInterval) {
-                clearInterval(buttonCheckInterval);
-            }
-            
-            fetch('/stop_monitoring', { method: 'POST' })
-                .then(response => response.json())
-                .then(data => {
-                    console.log('Monitoring stopped:', data);
-                })
-                .catch(error => {
-                    console.error('Error stopping monitoring:', error);
-                });
-        }
-
-
-
-        // Toggle fullscreen function
         function toggleFullscreen() {
             if (!document.fullscreenElement) {
-                const elem = document.documentElement;
-                if (elem.requestFullscreen) {
-                    elem.requestFullscreen().catch(err => console.log('Fullscreen request failed:', err));
-                } else if (elem.webkitRequestFullscreen) {
-                    elem.webkitRequestFullscreen();
-                } else if (elem.msRequestFullscreen) {
-                    elem.msRequestFullscreen();
-                }
+                document.documentElement.requestFullscreen();
             } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen().catch(err => console.log('Exit fullscreen failed:', err));
-                } else if (document.webkitExitFullscreen) {
-                    document.webkitExitFullscreen();
-                } else if (document.msExitFullscreen) {
-                    document.msExitFullscreen();
-                }
+                document.exitFullscreen();
             }
         }
 
-        // Handle fullscreen changes
-        document.addEventListener('fullscreenchange', function() {
-            if (!document.fullscreenElement) {
-                isFullscreen = false;
-            } else {
-                isFullscreen = true;
-            }
-        });
-
-        function updateBufferTimer(timeRemaining) {
-            const bufferTimer = document.getElementById('bufferTimer');
-            const bufferText = document.getElementById('bufferText');
-            
-            if (timeRemaining > 0) {
-                bufferTimer.style.display = 'flex';
-                bufferText.textContent = `Next in: ${timeRemaining.toFixed(1)}s`;
-            } else {
-                bufferTimer.style.display = 'none';
+        function leavePatientMonitoring() {
+            const patientName = document.getElementById('patientName').textContent;
+            if (confirm(`Are you sure you want to stop monitoring ${patientName}?`)) {
+                if (recognition) {
+                    recognition.stop();
+                }
+                window.location.href = '/modules';
             }
         }
-
-        // Prevent accidental exit (optional)
-        // window.addEventListener('beforeunload', function(e) {
-        //     e.preventDefault();
-        //     e.returnValue = '';
-        // });
     </script>
 </body>
 </html>

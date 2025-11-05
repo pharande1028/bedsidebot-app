@@ -396,6 +396,71 @@ def get_patient_details(patient_id):
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
+@app.route('/test/patients')
+def test_patients():
+    """Test route to see all patients"""
+    try:
+        patients = Patient.query.all()
+        if not patients:
+            return '<h1>No patients found. Please register patients first.</h1><a href="/patient">Register Patient</a>'
+        
+        html = '<h1>Available Patients:</h1><ul>'
+        for patient in patients:
+            html += f'<li><a href="/print/patient/{patient.patient_id}">{patient.full_name} (ID: {patient.patient_id})</a></li>'
+        html += '</ul>'
+        return html
+    except Exception as e:
+        return f'<h1>Error: {str(e)}</h1>'
+
+@app.route('/print/patient/<patient_id>')
+def print_patient_report_direct(patient_id):
+    """Direct HTML report for printing"""
+    try:
+        # Get patient data
+        patient = Patient.query.filter_by(patient_id=patient_id).first()
+        if not patient:
+            return '<h1>Patient not found</h1>'
+        
+        # Get patient requests (last 30 days)
+        from datetime import timedelta
+        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+        requests = PatientRequest.query.filter(
+            PatientRequest.patient_id == patient_id,
+            PatientRequest.timestamp >= thirty_days_ago
+        ).order_by(PatientRequest.timestamp.desc()).all()
+        
+        # Get request patterns
+        patterns = get_patient_request_patterns(patient_id, 30)
+        
+        # Generate and return HTML report directly
+        return generate_report_html(patient, requests, patterns)
+
+# Add a simple test report route
+@app.route('/test/report')
+def test_report():
+    """Generate a test report"""
+    return '''
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Test Report</title>
+        <style>
+            body { font-family: "Times New Roman", serif; margin: 20px; }
+            .print-btn { background: #007bff; color: white; padding: 10px 20px; border: none; cursor: pointer; }
+        </style>
+    </head>
+    <body>
+        <h1>BedsideBot Test Report</h1>
+        <button class="print-btn" onclick="window.print()">🖨️ Print This Report</button>
+        <p>This is a test report to verify printing functionality works.</p>
+        <p>If you can see this and print it, the system is working correctly.</p>
+    </body>
+    </html>
+    '''
+        
+    except Exception as e:
+        return f'<h1>Error generating report: {str(e)}</h1>'
+
 @app.route('/api/patient/report/<patient_id>', methods=['GET'])
 def generate_patient_report(patient_id):
     """Generate comprehensive patient report"""

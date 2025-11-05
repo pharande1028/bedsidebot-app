@@ -1049,22 +1049,9 @@
         }
 
         function printPatientReport(patientId) {
-            fetch(`/api/patient/report/${patientId}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        const printWindow = window.open('', '_blank');
-                        printWindow.document.write(data.report);
-                        printWindow.document.close();
-                        printWindow.focus();
-                    } else {
-                        alert('Failed to generate report');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error generating report:', error);
-                    alert('Error generating report');
-                });
+            // Open direct print URL in new window
+            const printUrl = `/print/patient/${patientId}`;
+            window.open(printUrl, '_blank');
         }
 
         function printCurrentPatientReport() {

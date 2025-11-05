@@ -1,16 +1,27 @@
 from flask import Flask, render_template, Response, request, jsonify, send_from_directory
 from flask_cors import CORS
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 import time
 import json
 import os
 from dotenv import load_dotenv
+from security import security, require_auth, validate_patient_data, sanitize_patient_data, log_security_event
 
 # Load environment variables
 load_dotenv()
 
-# Initialize Flask app
+# Initialize Flask app with security
 app = Flask(__name__)
-CORS(app)
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key-change-in-production')
+CORS(app, origins=['https://*.railway.app', 'https://localhost:*'])
+
+# Initialize rate limiter
+limiter = Limiter(
+    app,
+    key_func=get_remote_address,
+    default_limits=["100 per hour"]
+)
 
 # Registration data storage
 registration_data = {
@@ -111,17 +122,28 @@ def register_staff():
     return jsonify({"status": "success", "message": "Staff registered successfully"})
 
 @app.route('/api/register/patient', methods=['POST'])
+@limiter.limit("5 per minute")
 def register_patient():
     data = request.json
+    
+    # Security validation
+    validation_errors = validate_patient_data(data)
+    if validation_errors:
+        log_security_event('INVALID_INPUT', f'Patient registration validation failed: {validation_errors}')
+        return jsonify({'error': 'Invalid input data', 'details': validation_errors}), 400
+    
+    # Sanitize data
+    sanitized_data = sanitize_patient_data(data)
+    
     patient_data = {
-        'id': data.get('patientId', f"P{len(registration_data['patients']) + 1:03d}"),
-        'patientId': data.get('patientId'),
-        'name': data.get('fullName'),
-        'fullName': data.get('fullName'),
-        'bed_number': data.get('bedNumber'),
-        'bedNumber': data.get('bedNumber'),
-        'roomNumber': data.get('roomNumber'),
-        'primaryCondition': data.get('primaryCondition'),
+        'id': sanitized_data.get('patientId', f"P{len(registration_data['patients']) + 1:03d}"),
+        'patientId': sanitized_data.get('patientId'),
+        'name': sanitized_data.get('fullName'),
+        'fullName': sanitized_data.get('fullName'),
+        'bed_number': sanitized_data.get('bedNumber'),
+        'bedNumber': sanitized_data.get('bedNumber'),
+        'roomNumber': sanitized_data.get('roomNumber'),
+        'primaryCondition': sanitized_data.get('primaryCondition'),
         'lastActivity': 'Just registered'
     }
     

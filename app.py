@@ -19,7 +19,7 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key-change-in-production')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///bedsidebot.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-CORS(app, origins=['https://*.railway.app', 'https://localhost:*'])
+CORS(app, origins=['*'])  # Allow all origins for development and deployment
 
 # Initialize rate limiter
 limiter = Limiter(
@@ -749,6 +749,11 @@ def generate_report_html(patient, requests, patterns):
 
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 8080))
-    print("[INFO] Starting BedsideBot Cloud Version...")
+    debug_mode = os.environ.get('FLASK_ENV') == 'development'
+    
+    print("[INFO] Starting BedsideBot...")
     print(f"[INFO] Server running on port: {port}")
-    app.run(debug=False, host='0.0.0.0', port=port)
+    print(f"[INFO] Debug mode: {debug_mode}")
+    print(f"[INFO] Database: {app.config['SQLALCHEMY_DATABASE_URI']}")
+    
+    app.run(debug=debug_mode, host='0.0.0.0', port=port)

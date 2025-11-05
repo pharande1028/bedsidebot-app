@@ -1,99 +1,198 @@
+from flask import Flask, render_template, Response, request, jsonify, send_from_directory
+from flask_cors import CORS
+import time
+import json
 import os
-from flask import Flask, render_template, send_from_directory
+from dotenv import load_dotenv
 
+# Load environment variables
+load_dotenv()
+
+# Initialize Flask app
 app = Flask(__name__)
+CORS(app)
 
+# Registration data storage
+registration_data = {
+    'hospital': {},
+    'staff': [],
+    'patients': [],
+    'caregivers': []
+}
+
+# Latest request storage
+latest_request = None
+selected_button = None
+detected_button = None
+previous_button = None
+
+# Patient information
+patient_info = {"name": "", "bed_number": ""}
+
+# Active features
+active_features = set()
+
+# Routes for the multi-page frontend
 @app.route('/')
-def index():
-    return '''
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>BedsideBot - Patient Monitoring System</title>
-        <style>
-            body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
-            .container { max-width: 1200px; margin: 0 auto; text-align: center; }
-            .header { margin-bottom: 40px; }
-            .title { font-size: 3em; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
-            .subtitle { font-size: 1.2em; opacity: 0.9; }
-            .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin: 40px 0; }
-            .feature { background: rgba(255,255,255,0.1); padding: 30px; border-radius: 15px; backdrop-filter: blur(10px); }
-            .feature h3 { color: #ffd700; margin-bottom: 15px; }
-            .nav-buttons { margin: 40px 0; }
-            .btn { display: inline-block; padding: 15px 30px; margin: 10px; background: rgba(255,255,255,0.2); color: white; text-decoration: none; border-radius: 25px; transition: all 0.3s; }
-            .btn:hover { background: rgba(255,255,255,0.3); transform: translateY(-2px); }
-            .status { background: rgba(0,255,0,0.2); padding: 15px; border-radius: 10px; margin: 20px 0; }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <div class="header">
-                <h1 class="title">🏥 BedsideBot</h1>
-                <p class="subtitle">Advanced Patient Monitoring & Communication System</p>
-                <div class="status">✅ System Online - Ready for Multi-Device Access</div>
-            </div>
-            
-            <div class="features">
-                <div class="feature">
-                    <h3>🏥 Hospital Management</h3>
-                    <p>Complete hospital registration and management system for healthcare facilities.</p>
-                </div>
-                <div class="feature">
-                    <h3>👤 Patient Portal</h3>
-                    <p>Patient registration, monitoring, and communication interface.</p>
-                </div>
-                <div class="feature">
-                    <h3>👨‍⚕️ Staff Dashboard</h3>
-                    <p>Healthcare staff management and real-time patient monitoring.</p>
-                </div>
-                <div class="feature">
-                    <h3>📊 ICU Monitoring</h3>
-                    <p>Real-time intensive care unit dashboard with patient status tracking.</p>
-                </div>
-            </div>
-            
-            <div class="nav-buttons">
-                <a href="/hospital" class="btn">🏥 Hospital Registration</a>
-                <a href="/patient" class="btn">👤 Patient Portal</a>
-                <a href="/staff" class="btn">👨‍⚕️ Staff Dashboard</a>
-                <a href="/icu" class="btn">📊 ICU Monitoring</a>
-            </div>
-            
-            <div class="feature">
-                <h3>🌐 Multi-Device Access</h3>
-                <p><strong>Share this URL with your team:</strong></p>
-                <p style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px; word-break: break-all;">
-                    <script>document.write(window.location.href);</script>
-                </p>
-                <p>✅ Works on computers, tablets, and mobile devices<br>
-                ✅ Multiple users can access simultaneously<br>
-                ✅ No installation required - just open in browser</p>
-            </div>
-        </div>
-    </body>
-    </html>
-    '''
+def landing():
+    return render_template('landing.html')
 
 @app.route('/hospital')
-def hospital():
-    return '<h1>🏥 Hospital Registration</h1><p>Hospital management system</p><a href="/">← Back to Home</a>'
-
-@app.route('/patient')
-def patient():
-    return '<h1>👤 Patient Portal</h1><p>Patient monitoring and communication</p><a href="/">← Back to Home</a>'
+def hospital_registration():
+    return render_template('hospital.html')
 
 @app.route('/staff')
-def staff():
-    return '<h1>👨‍⚕️ Staff Dashboard</h1><p>Healthcare staff management</p><a href="/">← Back to Home</a>'
+def staff_registration():
+    return render_template('staff.html')
 
-@app.route('/icu')
-def icu():
-    return '<h1>📊 ICU Monitoring</h1><p>Real-time patient monitoring dashboard</p><a href="/">← Back to Home</a>'
+@app.route('/patient')
+def patient_registration():
+    return render_template('patient.html')
 
+@app.route('/caregiver')
+def caregiver_registration():
+    return render_template('caregiver.html')
+
+@app.route('/modules')
+def module_selection():
+    return render_template('modules.html')
+
+@app.route('/interface')
+def patient_interface():
+    return render_template('interface.html')
+
+@app.route('/demo')
+def demo():
+    return render_template('demo.html')
+
+@app.route('/icu_access')
+def icu_access():
+    return render_template('icu_access.html')
+
+@app.route('/icu_dashboard')
+def icu_dashboard():
+    return render_template('icu_dashboard.html')
+
+@app.route('/static/<filename>')
+def static_files(filename):
+    return send_from_directory('static', filename)
+
+# Health check endpoint
 @app.route('/health')
-def health():
+def health_check():
     return "OK", 200
 
-if __name__ == '__main__':
+# Video feed endpoint (placeholder for cloud)
+@app.route('/video_feed')
+def video_feed():
+    def generate():
+        # Create a simple placeholder image response
+        import io
+        import base64
+        
+        # Simple 1x1 pixel image data
+        pixel_data = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\tpHYs\x00\x00\x0b\x13\x00\x00\x0b\x13\x01\x00\x9a\x9c\x18\x00\x00\x00\x0cIDATx\x9cc```\x00\x00\x00\x04\x00\x01\xdd\x8d\xb4\x1c\x00\x00\x00\x00IEND\xaeB`\x82'
+        
+        while True:
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/png\r\n\r\n' + pixel_data + b'\r\n')
+            time.sleep(0.1)
+    
+    return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+# API Routes for registration
+@app.route('/api/register/hospital', methods=['POST'])
+def register_hospital():
+    data = request.json
+    registration_data['hospital'] = data
+    return jsonify({"status": "success", "message": "Hospital registered successfully"})
+
+@app.route('/api/register/staff', methods=['POST'])
+def register_staff():
+    data = request.json
+    registration_data['staff'].append(data)
+    return jsonify({"status": "success", "message": "Staff registered successfully"})
+
+@app.route('/api/register/patient', methods=['POST'])
+def register_patient():
+    data = request.json
+    if 'id' not in data:
+        data['id'] = f"P{len(registration_data['patients']) + 1:03d}"
+    data['lastActivity'] = 'Just registered'
+    registration_data['patients'].append(data)
+    return jsonify({"status": "success", "message": "Patient registered successfully", "patient_id": data['id']})
+
+@app.route('/api/register/caregiver', methods=['POST'])
+def register_caregiver():
+    data = request.json
+    registration_data['caregivers'].append(data)
+    return jsonify({"status": "success", "message": "Caregiver registered successfully"})
+
+@app.route('/api/get_patients', methods=['GET'])
+def get_patients():
+    enhanced_patients = []
+    for i, patient in enumerate(registration_data['patients']):
+        enhanced_patient = patient.copy()
+        enhanced_patient['id'] = enhanced_patient.get('id', f'P{i+1:03d}')
+        enhanced_patient['lastActivity'] = enhanced_patient.get('lastActivity', 'No recent activity')
+        enhanced_patients.append(enhanced_patient)
+    return jsonify({"status": "success", "patients": enhanced_patients})
+
+@app.route('/api/get_latest_request', methods=['GET'])
+def get_latest_request():
+    global latest_request
+    if latest_request:
+        request_data = latest_request
+        latest_request = None
+        return jsonify({"request": request_data})
+    return jsonify({"request": None})
+
+@app.route('/api/remove_patient', methods=['POST'])
+def remove_patient():
+    data = request.json
+    patient_id = data.get('patient_id')
+    registration_data['patients'] = [p for p in registration_data['patients'] if p.get('id') != patient_id]
+    return jsonify({"status": "success", "message": "Patient removed from monitoring"})
+
+# Monitoring routes (simplified for cloud)
+@app.route('/start_monitoring', methods=['POST'])
+def start_monitoring():
+    global active_features, patient_info
+    data = request.json
+    patient_info = {
+        "name": data.get("patientName", ""),
+        "bed_number": data.get("bedNumber", "")
+    }
+    active_features = set(data.get("features", []))
+    return jsonify({"status": "success", "message": "Monitoring started (cloud mode)"})
+
+@app.route('/get_selected_button')
+def get_selected_button():
+    global selected_button
+    # Simulate button detection for demo
+    return jsonify({"button": selected_button, "text": "Demo Mode"})
+
+@app.route('/set_button', methods=['POST'])
+def set_button():
+    global selected_button
+    data = request.get_json()
+    selected_button = data.get("button")
+    return jsonify({"status": "success"})
+
+@app.route('/listen_voice', methods=['POST'])
+def listen_voice():
+    # Simulate voice recognition for demo
+    return jsonify({"status": "ready", "message": "Voice recognition ready (cloud mode)"})
+
+@app.route('/stop_monitoring', methods=['POST'])
+def stop_monitoring():
+    global active_features, selected_button
+    active_features.clear()
+    selected_button = None
+    return jsonify({"status": "success", "message": "Monitoring stopped"})
+
+if __name__ == "__main__":
     port = int(os.environ.get('PORT', 8080))
-    app.run(host='0.0.0.0', port=port)
+    print("[INFO] Starting BedsideBot Cloud Version...")
+    print(f"[INFO] Server running on port: {port}")
+    app.run(debug=False, host='0.0.0.0', port=port)

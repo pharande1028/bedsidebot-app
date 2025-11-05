@@ -695,10 +695,11 @@ def cleanup():
 
 if __name__ == "__main__":
     try:
+        port = int(os.environ.get('PORT', 5000))
         print("[INFO] Starting BedsideBot server...")
-        print("[INFO] Server will be available at: http://localhost:5000")
+        print(f"[INFO] Server will be available on port: {port}")
         print("[INFO] Press Ctrl+C to stop the server")
-        app.run(debug=False, host='0.0.0.0', port=5000, threaded=True)
+        app.run(debug=False, host='0.0.0.0', port=port, threaded=True)
     except KeyboardInterrupt:
         print("\n[INFO] Server stopped by user")
     finally:

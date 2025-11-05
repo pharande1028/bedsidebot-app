@@ -12,10 +12,6 @@
   ],
   "routes": [
     {
-      "src": "/(.*)",
-      "dest": "/templates/$1.html"
-    },
-    {
       "src": "/static/(.*)",
       "dest": "/static/$1"
     },
@@ -26,5 +22,10 @@
       "src": "/(.*)",
       "dest": "/templates/landing.html"
     }
-  ]
+  ],
+  "functions": {
+    "app.py": {
+      "runtime": "python3.9"
+    }
+  }
 }

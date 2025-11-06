@@ -57,7 +57,10 @@ active_features = set()
 # Routes for the multi-page frontend
 @app.route('/')
 def landing():
-    return '''
+    try:
+        return render_template('landing.html')
+    except:
+        return '''
         <!DOCTYPE html>
         <html>
         <head>

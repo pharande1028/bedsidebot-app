@@ -57,8 +57,7 @@ active_features = set()
 # Routes for the multi-page frontend
 @app.route('/')
 def landing():
-    return
-        return '''
+    return '''
         <!DOCTYPE html>
         <html>
         <head>
@@ -339,16 +338,32 @@ def remove_patient():
         if not patient_id:
             return jsonify({"status": "error", "message": "Patient ID is required"}), 400
         
-        # Remove from database
+        # Remove patient from database
         patient = Patient.query.filter_by(patient_id=patient_id).first()
         if patient:
+            # Remove related patient requests
+            PatientRequest.query.filter_by(patient_id=patient_id).delete()
+            
+            # Remove related monitoring sessions
+            MonitoringSession.query.filter_by(patient_id=patient_id).delete()
+            
+            # Remove the patient
             db.session.delete(patient)
             db.session.commit()
+            
+            print(f"[INFO] Patient {patient_id} and related data removed from database")
+        else:
+            print(f"[WARNING] Patient {patient_id} not found in database")
         
         # Remove from memory
-        registration_data['patients'] = [p for p in registration_data['patients'] if p.get('id') != patient_id and p.get('patientId') != patient_id]
+        original_count = len(registration_data['patients'])
+        registration_data['patients'] = [p for p in registration_data['patients'] 
+                                       if p.get('id') != patient_id and p.get('patientId') != patient_id]
+        new_count = len(registration_data['patients'])
         
-        return jsonify({"status": "success", "message": "Patient removed successfully"})
+        print(f"[INFO] Removed from memory: {original_count} -> {new_count} patients")
+        
+        return jsonify({"status": "success", "message": "Patient removed successfully from database and dashboard"})
         
     except Exception as e:
         db.session.rollback()
